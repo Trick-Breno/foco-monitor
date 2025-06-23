@@ -16,7 +16,7 @@
 | RNF-01 | O sistema deve ter os dados sincronizados e funcionar em qualquer disositivo atravéz do navegador. | ALTA | 
 
 
-## Regras de negócio
+### Regras de negócio
 
 |ID     | Descrição da Regra de Negócio  |Prioridade |
 |-------|-------------------------|----|
