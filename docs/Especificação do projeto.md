@@ -26,5 +26,4 @@
 
 ### Diagrama de classes
 
-![Diagrama de classes (3)](https://github.com/user-attachments/assets/382edede-7396-4332-94df-26495579a240)
-
+![Diagrama foco-monitor drawio (1jk)](https://github.com/user-attachments/assets/a0db20ef-2349-41c5-9734-9c3166fcdc01)
