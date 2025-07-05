@@ -6,8 +6,7 @@
 |RF-02| O sistema deve permitir iniciar/concluir uma tarefa e exibir tempo gasto na tarefa em tempo real. | ALTA |
 |RF-03| O sistema deve permitir iniciar/encerrar uma rotina e exibir em tempo real e duração da rotina | ALTA |
 |RF-04| O sistema deve exibir informações de progresso da rotina como; porcentagem de tarefas concluídas, tempo total rotina, tempo total executando tarefas e tempo perdido (não registrado) e exibir um gráfico. | ALTA |
-|RF-05| O sistema deve excluir as tarefas conclúidas todos os dias. | ALTA |
-|RF-06| O sistema deve permitir excluir todos os dados. | MÉDIA |
+|RF-05| O sistema deve permitir excluir todos os dados. | MÉDIA |
 
 ### Requisitos não Funcionais
 
@@ -16,12 +15,15 @@
 | RNF-01 | O sistema deve ter os dados sincronizados e funcionar em qualquer disositivo atravéz do navegador. | ALTA | 
 
 
-## Regras de negócio
+### Regras de negócio
 
 |ID     | Descrição da Regra de Negócio  |Prioridade |
 |-------|-------------------------|----|
 | RN-01 | Nenhuma outra tarefa pode ser iniciada enquanto uma estiver em execução. | ALTA | 
-| RN-02 | Ao iniciar a rotina, as tarefas concluídas devem ser excluídas. | ALTA | 
-| RN-03 | Tarefas não podem ser iniciadas antes do início da rotina. | ALTA | 
-| RN-04 | A rotina não pode ser encerrada com tarefas em andamento. | ALTA | 
+| RN-02 | Tarefas não podem ser iniciadas antes do início da rotina. | ALTA | 
+| RN-03 | A rotina não pode ser encerrada com alguma tarefa em andamento. | ALTA | 
 
+
+### Diagrama de classes
+
+![Diagrama foco-monitor drawio (1jk)](https://github.com/user-attachments/assets/a0db20ef-2349-41c5-9734-9c3166fcdc01)
