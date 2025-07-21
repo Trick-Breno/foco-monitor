@@ -1,3 +1,5 @@
+import { Timestamp } from "firebase/firestore";
+
 export type StatusRotina = "criada" | "em andamento" | "concluida";
 export type StatusTarefa = "pendente" | "em andamento" | "concluida";
 export type SubStatusTarefa = "rodando" | "pausada";
@@ -15,20 +17,20 @@ export interface Tarefa {
     nome: string;
     status: StatusTarefa;
     subStatus?: SubStatusTarefa;
-    inicioTarefa?: Date;
-    fimTarefa?: Date;
+    inicioTarefa?: Timestamp;
+    fimTarefa?: Timestamp;
     duracaoSegundos: number;
     duracaoPausas: number;
-    pausas: Array<{ inicio: Date; fim: Date}>;
+    pausas: Array<{ inicio: Timestamp; fim: Timestamp}>;
 };
 
 export interface Rotina {
     rotinaId: string;
     usuarioId: string;
-    data: Date;
+    data: Timestamp;
     status: StatusRotina;
-    inicioRotina?: Date;
-    fimRotina?: Date;
+    inicioRotina?: Timestamp;
+    fimRotina?: Timestamp;
     duracaoSegundos: number;
     totalTarefas: number;
     tarefasConcluidas: number;
