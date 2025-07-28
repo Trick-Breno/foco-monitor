@@ -3,6 +3,7 @@
 import React from 'react';
 import { TaskCard } from '@/components/features/TaskCard';
 import { useRoutine } from '@/contexts/RoutineContext';
+import { AddTask } from './AddTask';
 
 export function TaskList() {
   const {
@@ -27,6 +28,7 @@ export function TaskList() {
           isStartDisabled={isAnyTaskActive && task.status === 'pendente'}
         />
       ))}
+      <AddTask/>
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
   updateDoc,
   Timestamp,
   serverTimestamp,
+  addDoc
 } from 'firebase/firestore';
 
 interface RoutineContextType {
@@ -19,6 +20,7 @@ interface RoutineContextType {
   handlePauseTask: (taskId: string) => void;
   handleResumeTask: (taskId: string) => void;
   handleCompleteTask: (taskId: string) => void;
+  handleAddTask: (taskName: string) => void;
 }
 
 const RoutineContext = createContext<RoutineContextType | undefined>(undefined);
@@ -41,6 +43,25 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     });
     return () => unsubscribe();
   }, []);
+
+  const handleAddTask = async (taskName: string) => {
+    if (!taskName.trim()) return;
+
+    const newTask: Omit<Tarefa, 'tarefaId'> = {
+      rotinaId: '1',
+      usuarioId: '1',
+      nome: taskName.trim(),
+      status: 'pendente',
+      duracaoPausas: 0,
+      duracaoSegundos: 0,
+    };
+
+    try {
+      await addDoc(collection(db, 'tasks'), newTask);
+    } catch (error) {
+      console.error('Erro ao adicionar tarefa:', error);
+    }
+  };
 
   const handleStartTask = async (taskId: string) => {
     const taskDocRef = doc(db, 'tasks', taskId);
@@ -124,6 +145,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     handlePauseTask,
     handleResumeTask,
     handleCompleteTask,
+    handleAddTask,
   };
 
   return <RoutineContext.Provider value={value}>{children}</RoutineContext.Provider>;

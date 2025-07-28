@@ -53,7 +53,7 @@ export function TaskCard({
 
   if (task.status === 'em andamento') {
     return (
-      <Card className="ring-2 ring-blue-500 shadow-lg">
+      <Card className="inline ring-2 ring-blue-500 shadow-lg">
         <div className="flex justify-between items-center mb-4">
           <span className="font-semibold text-lg">{task.nome}</span>
         </div>
@@ -78,17 +78,22 @@ export function TaskCard({
     );
   }
 
-  if (task.status === 'concluida') {
+  /*if (task.status === 'concluida') {
     return (
         <Card className="bg-gray-700 opacity-60 flex justify-between items-center">
             <span className="font-semibold line-through">{task.nome}</span>
             <span className="text-sm">{formatTime(task.duracaoSegundos)}</span>
         </Card>
     );
+  }*/
+
+    if (task.status === 'concluida') {
+    return;
+    
   }
 
   return (
-    <Card className="flex justify-between items-center">
+    <Card >
       <span className="font-semibold">{task.nome}</span>
       <Botao onClick={onStartClick} disabled={isStartDisabled}>
         Iniciar

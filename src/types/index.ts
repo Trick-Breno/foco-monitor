@@ -21,7 +21,7 @@ export interface Tarefa {
     fimTarefa?: Timestamp;
     duracaoSegundos: number;
     duracaoPausas: number;
-    pausas: Array<{ inicio: Timestamp; fim: Timestamp}>;
+    //pausas: Array<{ inicio: Timestamp; fim: Timestamp}>;
 };
 
 export interface Rotina {
