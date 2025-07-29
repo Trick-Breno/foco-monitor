@@ -10,7 +10,8 @@ import {
   updateDoc,
   Timestamp,
   serverTimestamp,
-  addDoc
+  addDoc,
+  deleteDoc,
 } from 'firebase/firestore';
 
 interface RoutineContextType {
@@ -21,6 +22,7 @@ interface RoutineContextType {
   handleResumeTask: (taskId: string) => void;
   handleCompleteTask: (taskId: string) => void;
   handleAddTask: (taskName: string) => void;
+  handleDeleteTask: (taskId: string) => void;
 }
 
 const RoutineContext = createContext<RoutineContextType | undefined>(undefined);
@@ -136,6 +138,15 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     }
   };
 
+  const handleDeleteTask = async (taskId: string) => {
+    const taskDocRef = doc(db, 'tasks', taskId);
+    try {
+      await deleteDoc(taskDocRef);
+    } catch (error) {
+    console.error('Erro ao excluir tarefa:', error);
+    }
+  };
+
   const isAnyTaskActive = tasks.some((task) => task.status === 'em andamento');
 
   const value = {
@@ -146,6 +157,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     handleResumeTask,
     handleCompleteTask,
     handleAddTask,
+    handleDeleteTask,
   };
 
   return <RoutineContext.Provider value={value}>{children}</RoutineContext.Provider>;

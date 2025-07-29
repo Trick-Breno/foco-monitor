@@ -13,6 +13,7 @@ export function TaskList() {
     handlePauseTask,
     handleResumeTask,
     handleCompleteTask,
+    handleDeleteTask,
   } = useRoutine();
 
   return (
@@ -25,6 +26,7 @@ export function TaskList() {
           onPauseClick={() => handlePauseTask(task.tarefaId)}
           onResumeClick={() => handleResumeTask(task.tarefaId)}
           onCompleteClick={() => handleCompleteTask(task.tarefaId)}
+          onDeleteClick={() => handleDeleteTask(task.tarefaId)}
           isStartDisabled={isAnyTaskActive && task.status === 'pendente'}
         />
       ))}

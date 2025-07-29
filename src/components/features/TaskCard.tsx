@@ -22,6 +22,7 @@ interface TaskCardProps {
   onPauseClick?: () => void;
   onResumeClick?: () => void;
   onCompleteClick?: () => void;
+  onDeleteClick: () => void;
   isStartDisabled?: boolean;
 }
 
@@ -31,6 +32,7 @@ export function TaskCard({
   onPauseClick,
   onResumeClick,
   onCompleteClick,
+  onDeleteClick,
   isStartDisabled = false,
 }: TaskCardProps) {
   const [elapsedSeconds, setElapsedSeconds] = useState(task.duracaoSegundos);
@@ -95,9 +97,14 @@ export function TaskCard({
   return (
     <Card >
       <span className="font-semibold">{task.nome}</span>
-      <Botao onClick={onStartClick} disabled={isStartDisabled}>
-        Iniciar
-      </Botao>
+      <div className='flex items-center gap-2'>
+        <Botao onClick={onStartClick} disabled={isStartDisabled}>
+          Iniciar
+        </Botao>
+        <Botao onClick={onDeleteClick} variant='secondary' className='px-2 py-1 text-xs'>
+          X
+        </Botao>
+      </div>
     </Card>
   );
 }
