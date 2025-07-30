@@ -23,6 +23,7 @@ interface RoutineContextType {
   handleCompleteTask: (taskId: string) => void;
   handleAddTask: (taskName: string) => void;
   handleDeleteTask: (taskId: string) => void;
+  handleUpdateTaskName: (taskId: string, newName: string) => void;
 }
 
 const RoutineContext = createContext<RoutineContextType | undefined>(undefined);
@@ -147,6 +148,18 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     }
   };
 
+  const handleUpdateTaskName = async (taskId: string, newName: string) => {
+    if (!newName.trim()) return;
+    const taskDocRef = doc(db, 'tasks', taskId);
+    try {
+      await updateDoc(taskDocRef, {
+        nome: newName.trim(),
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar o nome da tarefa:', error);
+    }
+  };
+
   const isAnyTaskActive = tasks.some((task) => task.status === 'em andamento');
 
   const value = {
@@ -158,6 +171,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     handleCompleteTask,
     handleAddTask,
     handleDeleteTask,
+    handleUpdateTaskName,
   };
 
   return <RoutineContext.Provider value={value}>{children}</RoutineContext.Provider>;
