@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Tarefa, StatusTarefa, SubStatusTarefa } from '@/types';
+import { Tarefa, StatusTarefa, SubStatusTarefa, Rotina } from '@/types';
 import { db } from '@/lib/firebase/config';
 import {
   collection,
@@ -12,11 +12,17 @@ import {
   serverTimestamp,
   addDoc,
   deleteDoc,
+  query,
+  where,
+  limit,
+  orderBy
 } from 'firebase/firestore';
 
 interface RoutineContextType {
   tasks: Tarefa[];
+  activeRoutine: Rotina | null;
   isAnyTaskActive: boolean;
+  handleCreateRoutine: () => void;
   handleStartTask: (taskId: string) => void;
   handlePauseTask: (taskId: string) => void;
   handleResumeTask: (taskId: string) => void;
@@ -34,18 +40,74 @@ interface RoutineProviderProps {
 
 export function RoutineProvider({ children }: RoutineProviderProps) {
   const [tasks, setTasks] = useState<Tarefa[]>([]);
+  const [activeRoutine, setActiveRoutine] = useState<Rotina | null>(null);
 
   useEffect(() => {
-    const tasksCollectionRef = collection(db, 'tasks');
-    const unsubscribe = onSnapshot(tasksCollectionRef, (snapshot) => {
-      const tasksData = snapshot.docs.map((doc) => ({
-        tarefaId: doc.id,
-        ...(doc.data() as Omit<Tarefa, 'tarefaId'>),
-      }));
-      setTasks(tasksData);
+    const routinesQuery = query (
+      collection(db, 'Routines'),
+      where('status', 'in', ['criada', 'em andamento']),
+      limit(1)
+    );
+
+    const unsubscribeRoutines = onSnapshot(routinesQuery, (snapshot) => {
+      if (snapshot.empty) {
+        setActiveRoutine(null);
+        setTasks([]); //vai limpar a lista de tarefas so na memoria do navegador? pq?
+      } else {
+        const routineData = {
+          rotinaId: snapshot.docs[0].id,
+          ...(snapshot.docs[0].data() as Omit<Rotina, 'rotinaId'>),
+        };
+        setActiveRoutine(routineData);
+      }
     });
-    return () => unsubscribe();
+
+    return () => unsubscribeRoutines();
   }, []);
+
+  useEffect(() => {
+    if (activeRoutine) {
+      const tasksQuery = query(
+        collection(db, 'tasks'), 
+        where('rotinaId', '==', activeRoutine.rotinaId),
+        orderBy('status')
+      );
+
+      const unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
+        const tasksData = snapshot.docs.map((doc) => ({
+          tarefaId: doc.id,
+          ...(doc.data() as Omit<Tarefa, 'tarefaId'>),
+        }));
+        setTasks(tasksData);
+      });
+
+      return () => unsubscribeTasks();
+    }
+  }, [activeRoutine]);
+
+  const handleCreateRoutine = async () => {
+    if (activeRoutine) {
+      alert('Ja existe uma rotina');
+      return;
+    }
+
+    const newRoutine: Omit<Rotina, 'rotinaId'> = {
+    usuarioId: '1',
+    data: Timestamp.now(),
+    status: 'criada',
+    duracaoSegundos: 0,
+    totalTarefas: 0,
+    tarefasConcluidas: 0,
+    };
+
+    try {
+      await addDoc(collection(db, 'routines'), newRoutine);
+    } catch (error) {
+      console.error('Erro ao criar nova rotina:', error);
+    }
+  };
+
+  
 
   const handleAddTask = async (taskName: string) => {
     if (!taskName.trim()) return;
@@ -164,7 +226,9 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
 
   const value = {
     tasks,
+    activeRoutine,
     isAnyTaskActive,
+    handleCreateRoutine,
     handleStartTask,
     handlePauseTask,
     handleResumeTask,
