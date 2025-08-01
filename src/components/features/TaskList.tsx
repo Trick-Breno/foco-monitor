@@ -8,6 +8,7 @@ import { AddTask } from './AddTask';
 export function TaskList() {
   const {
     tasks,
+    activeRoutine,
     isAnyTaskActive,
     handleStartTask,
     handlePauseTask,
@@ -16,6 +17,10 @@ export function TaskList() {
     handleDeleteTask,
     handleUpdateTaskName,
   } = useRoutine();
+
+  if (!activeRoutine) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col gap-4">

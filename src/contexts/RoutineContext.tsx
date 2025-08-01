@@ -15,7 +15,6 @@ import {
   query,
   where,
   limit,
-  orderBy
 } from 'firebase/firestore';
 
 interface RoutineContextType {
@@ -23,6 +22,8 @@ interface RoutineContextType {
   activeRoutine: Rotina | null;
   isAnyTaskActive: boolean;
   handleCreateRoutine: () => void;
+  handleStartRoutine: (routineId: string) => void;
+  handleCompleteRoutine: (routineId: string) => void;
   handleStartTask: (taskId: string) => void;
   handlePauseTask: (taskId: string) => void;
   handleResumeTask: (taskId: string) => void;
@@ -44,7 +45,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
 
   useEffect(() => {
     const routinesQuery = query (
-      collection(db, 'Routines'),
+      collection(db, 'routines'),
       where('status', 'in', ['criada', 'em andamento']),
       limit(1)
     );
@@ -52,7 +53,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     const unsubscribeRoutines = onSnapshot(routinesQuery, (snapshot) => {
       if (snapshot.empty) {
         setActiveRoutine(null);
-        setTasks([]); //vai limpar a lista de tarefas so na memoria do navegador? pq?
+        setTasks([]);
       } else {
         const routineData = {
           rotinaId: snapshot.docs[0].id,
@@ -70,7 +71,6 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
       const tasksQuery = query(
         collection(db, 'tasks'), 
         where('rotinaId', '==', activeRoutine.rotinaId),
-        orderBy('status')
       );
 
       const unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
@@ -87,7 +87,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
 
   const handleCreateRoutine = async () => {
     if (activeRoutine) {
-      alert('Ja existe uma rotina');
+      alert('Ja existe uma rotina. Conclua a rotina atual para criar uma nova.');
       return;
     }
 
@@ -107,13 +107,49 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     }
   };
 
-  
+  const handleStartRoutine = async (routineId: string) => {
+    const routineDocRef = doc(db, 'routines', routineId);
+    try {
+      await updateDoc(routineDocRef, {
+        status: 'em andamento',
+        inicioRotina: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Erro ao iniciar rotina:', error);
+    }
+  };
+
+  const handleCompleteRoutine = async (routineId: string) => {
+    const routineDocRef = doc(db, 'routines', routineId);
+    const routineToComplete = activeRoutine;
+
+    if (isAnyTaskActive){
+      alert('Antes de encerrar rotina, finalize a tarefa em andamento.');
+      return;
+    }
+    
+    if (!routineToComplete || !routineToComplete.inicioRotina) return;
+
+    const startTime = routineToComplete.inicioRotina.toDate().getTime();
+    const endTime = Date.now();
+    const durationInSeconds = Math.round((endTime - startTime) / 1000)
+
+    try {
+      await updateDoc(routineDocRef, {
+        status: 'concluida',
+        fimRotina: serverTimestamp(),
+        duracaoSegundos: durationInSeconds,
+      });
+    } catch (error) {
+      console.error('Erro ao concluir rotina:', error);
+    }
+  };
 
   const handleAddTask = async (taskName: string) => {
-    if (!taskName.trim()) return;
+    if (!taskName.trim() || !activeRoutine) return;
 
     const newTask: Omit<Tarefa, 'tarefaId'> = {
-      rotinaId: '1',
+      rotinaId: activeRoutine.rotinaId,
       usuarioId: '1',
       nome: taskName.trim(),
       status: 'pendente',
@@ -229,6 +265,8 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     activeRoutine,
     isAnyTaskActive,
     handleCreateRoutine,
+    handleStartRoutine,
+    handleCompleteRoutine,
     handleStartTask,
     handlePauseTask,
     handleResumeTask,

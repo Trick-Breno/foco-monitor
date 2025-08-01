@@ -119,12 +119,9 @@ export function TaskCard({
   if (task.status === 'concluida') {
     return (
         <Card className="bg-gray-700 opacity-60 flex justify-between items-center">
-            <span className="font-semibold line-through">{task.nome}</span>
-            <span className="text-sm">{formatTime(task.duracaoSegundos)}</span>
-                    <Botao onClick={onDeleteClick} variant='secondary' className='px-2 py-1 text-xs'>
-          X
-        </Botao>
-
+          <span className="font-semibold line-through">{task.nome}</span>
+          <span className="text-sm">{formatTime(task.duracaoSegundos)}</span>
+          <Botao onClick={onDeleteClick} variant='secondary' className='px-2 py-1 text-xs'> X </Botao>
         </Card>
     );
   }
