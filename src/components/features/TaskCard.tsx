@@ -4,17 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Botao } from '@/components/ui/Botao';
 import { Tarefa } from '@/types';
+import { formatTime } from '@/utils/formatTime';
 import { Timestamp } from 'firebase/firestore';
-
-const formatTime = (totalSeconds: number) => {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
-    2,
-    '0'
-  )}:${String(seconds).padStart(2, '0')}`;
-};
 
 interface TaskCardProps {
   task: Tarefa;

@@ -34,7 +34,8 @@ export function TaskList() {
           onCompleteClick={() => handleCompleteTask(task.tarefaId)}
           onDeleteClick={() => handleDeleteTask(task.tarefaId)}
           onUpdateTaskName={handleUpdateTaskName}
-          isStartDisabled={isAnyTaskActive && task.status === 'pendente'}
+          isStartDisabled={
+            (isAnyTaskActive && task.status === 'pendente') || activeRoutine.status === 'criada'}
         />
       ))}
       <AddTask/>

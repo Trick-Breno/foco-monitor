@@ -120,14 +120,13 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
   };
 
   const handleCompleteRoutine = async (routineId: string) => {
-    const routineDocRef = doc(db, 'routines', routineId);
-    const routineToComplete = activeRoutine;
-
     if (isAnyTaskActive){
       alert('Antes de encerrar rotina, finalize a tarefa em andamento.');
       return;
     }
-    
+
+    const routineDocRef = doc(db, 'routines', routineId);
+    const routineToComplete = activeRoutine;
     if (!routineToComplete || !routineToComplete.inicioRotina) return;
 
     const startTime = routineToComplete.inicioRotina.toDate().getTime();

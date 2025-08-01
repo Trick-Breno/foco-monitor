@@ -1,12 +1,29 @@
 'use client';
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRoutine } from "@/contexts/RoutineContext";
 import { Botao } from "../ui/Botao";
 import { Card } from "../ui/Card";
+import { formatTime } from "@/utils/formatTime";
+import { Timestamp } from "firebase/firestore/lite";
 
 export function RoutineController() {
     const {activeRoutine, handleCreateRoutine, handleStartRoutine, handleCompleteRoutine} = useRoutine();
+    const [routineSeconds, setRoutineSeconds] = useState(0)
+
+    useEffect(() => {
+        if (activeRoutine?.status !== 'em andamento' || !activeRoutine.inicioRotina) {
+            return;
+        }
+
+        const intervalId = setInterval(() => {
+            const now = Date.now();
+            const startTime = activeRoutine.inicioRotina!.toDate().getTime();
+            const secondsPassed = Math.round((now - startTime) / 1000);
+            setRoutineSeconds(secondsPassed);
+        }, 1000);
+        return () => clearInterval(intervalId);
+    }, [activeRoutine]);
 
     if (!activeRoutine) {
         return (
@@ -21,10 +38,9 @@ export function RoutineController() {
     return (
         <Card className="mb-4">
             <div className="flex justify-between items-center">
-                <div className="flex flex-col hidden">
-                    <span className="text-sm text-gray-400 ">Rotina do Dia</span>
-                    <span className="text-xl font-bold text-blue-400">{activeRoutine.status}</span>
-                </div>
+                {activeRoutine.status !== 'concluida' && (
+                    <span className="text-2xl font-bold mr-4">{formatTime(routineSeconds)}</span>
+                )}
                 {activeRoutine.status === 'criada' && (
                     <Botao onClick={() => handleStartRoutine(activeRoutine.rotinaId)} className="px-6 py-3">
                         Iniciar Rotina
