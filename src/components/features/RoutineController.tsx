@@ -4,26 +4,18 @@ import React, { useEffect, useState } from "react";
 import { useRoutine } from "@/contexts/RoutineContext";
 import { Botao } from "../ui/Botao";
 import { Card } from "../ui/Card";
+import { useTimer } from "@/hooks/useTimer";
 import { formatTime } from "@/utils/formatTime";
 import { Timestamp } from "firebase/firestore/lite";
 
 export function RoutineController() {
     const {activeRoutine, handleCreateRoutine, handleStartRoutine, handleCompleteRoutine} = useRoutine();
-    const [routineSeconds, setRoutineSeconds] = useState(0)
 
-    useEffect(() => {
-        if (activeRoutine?.status !== 'em andamento' || !activeRoutine.inicioRotina) {
-            return;
-        }
-
-        const intervalId = setInterval(() => {
-            const now = Date.now();
-            const startTime = activeRoutine.inicioRotina!.toDate().getTime();
-            const secondsPassed = Math.round((now - startTime) / 1000);
-            setRoutineSeconds(secondsPassed);
-        }, 1000);
-        return () => clearInterval(intervalId);
-    }, [activeRoutine]);
+    const routineSeconds = useTimer({
+        isRunning: activeRoutine?.status === 'em andamento',
+        startTime: activeRoutine?.inicioRotina,
+        savedDuration: activeRoutine?.duracaoSegundos || 0,
+    })
 
     if (!activeRoutine) {
         return (
@@ -38,7 +30,7 @@ export function RoutineController() {
     return (
         <Card className="mb-4">
             <div className="flex justify-between items-center">
-                {activeRoutine.status !== 'concluida' && (
+                {activeRoutine && (
                     <span className="text-2xl font-bold mr-4">{formatTime(routineSeconds)}</span>
                 )}
                 {activeRoutine.status === 'criada' && (

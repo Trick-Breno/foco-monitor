@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Botao } from '@/components/ui/Botao';
 import { Tarefa } from '@/types';
+import { useTimer } from '@/hooks/useTimer';
 import { formatTime } from '@/utils/formatTime';
 import { Timestamp } from 'firebase/firestore';
 
@@ -28,22 +29,12 @@ export function TaskCard({
   onUpdateTaskName,
   isStartDisabled = false,
 }: TaskCardProps) {
-  const [elapsedSeconds, setElapsedSeconds] = useState(task.duracaoSegundos);
 
-  useEffect(() => {
-    if (task.status === 'em andamento' && task.subStatus === 'rodando' && task.inicioTarefa) {
-      const intervalId = setInterval(() => {
-        const now = Date.now();
-        const startTime = task.inicioTarefa!.toDate().getTime();
-        const secondsPassed = Math.round((now - startTime) / 1000);
-        setElapsedSeconds(task.duracaoSegundos + secondsPassed);
-      }, 1000);
-
-      return () => clearInterval(intervalId);
-    } else {
-      setElapsedSeconds(task.duracaoSegundos);
-    }
-  }, [task.status, task.subStatus, task.inicioTarefa, task.duracaoSegundos]);
+  const elapsedSeconds = useTimer({
+    isRunning: task.status === 'em andamento' && task.subStatus === 'rodando',
+    startTime: task.inicioTarefa,
+    savedDuration: task.duracaoSegundos,
+  }); 
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(task.nome);
