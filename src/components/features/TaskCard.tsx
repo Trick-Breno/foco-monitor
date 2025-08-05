@@ -36,6 +36,12 @@ export function TaskCard({
     savedDuration: task.duracaoSegundos,
   }); 
 
+    const pausaSeconds = useTimer({
+    isRunning: task.status === 'em andamento' && task.subStatus === 'pausada',
+    startTime: task.inicioRef,
+    savedDuration: - task.duracaoSegundos ,
+  }); 
+
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(task.nome);
 
@@ -71,7 +77,7 @@ export function TaskCard({
     </span>
   );
 
-  if (task.status === 'em andamento') {
+  if (task.status === 'em andamento' && task.subStatus === 'rodando') { //&& task.subStatus === 'rodando' remover depois do teste abaixo
     return (
       <Card className="inline ring-2 ring-blue-500 shadow-lg">
         <div className="flex justify-between items-center mb-4">
@@ -97,6 +103,32 @@ export function TaskCard({
       </Card>
     );
   }
+  //testando mostrar tempo pausa
+  if (task.status === 'em andamento' && task.subStatus === 'pausada') {
+    return (
+      <Card className="inline ring-2 ring-blue-500 shadow-lg">
+        <div className="flex justify-between items-center mb-4">
+          {taskNameComponent}
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-2xl font-bold">
+            {formatTime(elapsedSeconds)}
+          </span>
+          <span className="text-lg opacity-60">
+            {formatTime(pausaSeconds)}
+          </span>
+          <div className="flex gap-2">
+
+              <Botao variant="secondary" onClick={onResumeClick}>
+                Continuar
+              </Botao>
+            
+            <Botao onClick={onCompleteClick}>Concluir</Botao>
+          </div>
+        </div>
+      </Card>
+    );
+  } // aqui acaba codigo teste
 
   if (task.status === 'concluida') {
     return (

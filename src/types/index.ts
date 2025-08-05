@@ -15,13 +15,14 @@ export interface Tarefa {
     usuarioId: string;
     rotinaId: string;
     nome: string;
+    data: Timestamp;
     status: StatusTarefa;
     subStatus?: SubStatusTarefa;
     inicioTarefa?: Timestamp;
     fimTarefa?: Timestamp;
     duracaoSegundos: number;
     duracaoPausas: number;
-    //pausas: Array<{ inicio: Timestamp; fim: Timestamp}>;
+    inicioRef?: Timestamp; // referencia para calcular a duração das pausas
 };
 
 export interface Rotina {

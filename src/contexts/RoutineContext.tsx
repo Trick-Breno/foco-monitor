@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Tarefa, StatusTarefa, SubStatusTarefa, Rotina } from '@/types';
+import { Tarefa, Rotina, StatusTarefa, SubStatusTarefa, StatusRotina } from '@/types';
 import { db } from '@/lib/firebase/config';
 import {
   collection,
@@ -15,6 +15,7 @@ import {
   query,
   where,
   limit,
+  increment,
 } from 'firebase/firestore';
 
 interface RoutineContextType {
@@ -151,6 +152,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
       rotinaId: activeRoutine.rotinaId,
       usuarioId: '1',
       nome: taskName.trim(),
+      data: Timestamp.now(),
       status: 'pendente',
       duracaoPausas: 0,
       duracaoSegundos: 0,
@@ -158,6 +160,10 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
 
     try {
       await addDoc(collection(db, 'tasks'), newTask);
+      const routineDocRef = doc(db, 'routines', activeRoutine.rotinaId);
+      await updateDoc(routineDocRef, {
+        totalTarefas: increment(1),
+      });
     } catch (error) {
       console.error('Erro ao adicionar tarefa:', error);
     }
@@ -170,6 +176,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
         status: 'em andamento',
         subStatus: 'rodando',
         inicioTarefa: serverTimestamp(),
+        inicioRef: serverTimestamp(),
         duracaoSegundos: 0,
         duracaoPausas: 0,
       });
@@ -200,9 +207,18 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
 
   const handleResumeTask = async (taskId: string) => {
     const taskDocRef = doc(db, 'tasks', taskId);
+    const taskToResume = tasks.find((task) => task.tarefaId === taskId);
+
+    if (!taskToResume || !taskToResume.inicioRef) return;
+
+    const secondsPassed = Date.now() - taskToResume.inicioRef.toDate().getTime();
+    const pauseDuration = Math.round((secondsPassed) / 1000) - taskToResume.duracaoSegundos;
+
+
     try {
       await updateDoc(taskDocRef, {
         subStatus: 'rodando',
+        duracaoPausas: pauseDuration,
         inicioTarefa: serverTimestamp(),
       });
     } catch (error) {
@@ -214,13 +230,20 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     const taskDocRef = doc(db, 'tasks', taskId);
     const taskToComplete = tasks.find((task) => task.tarefaId === taskId);
 
-    if (!taskToComplete) return;
+    if (!taskToComplete || !taskToComplete.inicioRef )  return;
 
+    let pauseDuration = taskToComplete.duracaoPausas ;
+    
+    if ( taskToComplete.subStatus === 'pausada') {
+      const secondsPassed = Date.now() - taskToComplete.inicioRef.toDate().getTime();
+      pauseDuration = Math.round((secondsPassed) / 1000) - taskToComplete.duracaoSegundos;
+    }
+    
     let finalDuration = taskToComplete.duracaoSegundos; // se a tarefa estiver subStatus 'pausada' nao precisa de fazer calculo
 
     if (taskToComplete.status === 'em andamento' && taskToComplete.inicioTarefa) {
-        const secondsPassed = Date.now() - taskToComplete.inicioTarefa.toDate().getTime();
-        finalDuration += Math.round(secondsPassed / 1000);  
+      const secondsPassed = Date.now() - taskToComplete.inicioTarefa.toDate().getTime();
+      finalDuration += Math.round(secondsPassed / 1000);
     }
 
     try {
@@ -228,18 +251,37 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
         status: 'concluida',
         subStatus: null,
         fimTarefa: serverTimestamp(),
+        duracaoPausas: pauseDuration,
         duracaoSegundos: finalDuration,
         inicioTarefa: null,
       });
+
+      if (activeRoutine) {
+        const routineDocRef = doc(db, 'routines', activeRoutine.rotinaId);
+        await updateDoc(routineDocRef, {
+          tarefasConcluidas: increment(1),
+        });
+      }
     } catch (error) {
       console.error('Erro ao concluir a tarefa:', error);
     }
   };
 
   const handleDeleteTask = async (taskId: string) => {
+    const taskToDelete = tasks.find((task) => task.tarefaId === taskId);
+
+    if (!taskToDelete || !activeRoutine) return;
+
     const taskDocRef = doc(db, 'tasks', taskId);
     try {
       await deleteDoc(taskDocRef);
+      const routineDocRef = doc(db, 'routines', activeRoutine.rotinaId);
+      const updates = {
+        totalTarefas: increment(-1),
+        tarefasConcluidas: taskToDelete.status === 'concluida' ? increment(-1) : increment(0),
+      };
+      await updateDoc(routineDocRef, updates);
+
     } catch (error) {
     console.error('Erro ao excluir tarefa:', error);
     }
