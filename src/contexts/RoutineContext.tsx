@@ -84,6 +84,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
 
       return () => unsubscribeTasks();
     }
+    
   }, [activeRoutine]);
 
   const handleCreateRoutine = async () => {
