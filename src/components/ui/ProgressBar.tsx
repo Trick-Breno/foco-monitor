@@ -11,7 +11,7 @@ export function ProgressBar({ progress, label }: ProgressBarProps) {
   return (
     <div className="w-full bg-gray-700 rounded-full h-6 relative overflow-hidden">
       <div
-        className="bg-purple-600 h-6 rounded-full text-center text-white text-xs font-semibold flex items-center justify-end pr-2 transition-all duration-500"
+        className="bg-violet-800 h-6 rounded-full text-center text-white text-xs font-semibold flex items-center justify-end pr-2 transition-all duration-500"
         style={{ width: `${safeProgress}%` }}
       >
         {label || `${Math.round(safeProgress)}%`}

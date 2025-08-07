@@ -17,7 +17,8 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { formatTime } from '@/utils/formatTime';
 
 export default function MonitoramentoPage() {
-  const { activeRoutine } = useRoutine();
+  // 1. Pegar os valores "vivos" do contexto
+  const { activeRoutine, liveRoutineSeconds, liveTaskSeconds } = useRoutine();
 
   const [displayRoutine, setDisplayRoutine] = useState<Rotina | null>(null);
   const [displayTasks, setDisplayTasks] = useState<Tarefa[]>([]);
@@ -53,6 +54,7 @@ export default function MonitoramentoPage() {
   }, [activeRoutine]);
 
   useEffect(() => {
+    // A lógica para buscar as tarefas associadas não muda
     if (displayRoutine) {
       const fetchTasks = async () => {
         const tasksQuery = query(
@@ -78,73 +80,89 @@ export default function MonitoramentoPage() {
     return <div className="text-center p-8">Nenhuma rotina para exibir.</div>;
   }
 
-  // --- LÓGICA DE CÁLCULO DAS ESTATÍSTICAS ---
-  const totalTaskDuration = displayTasks.reduce((sum, task) => sum + task.duracaoSegundos, 0);
+  // --- LÓGICA DE CÁLCULO ATUALIZADA ---
+  const isLive = !!activeRoutine; // É true se houver uma rotina ativa, senão false
+
+  // 2. Usar o tempo vivo se a rotina estiver ativa, senão o tempo salvo
+  const routineDurationForCalc = isLive
+    ? liveRoutineSeconds
+    : displayRoutine.duracaoSegundos;
+
+  const totalTaskDuration = displayTasks.reduce((sum, task) => {
+    // Se a tarefa atual é a que está rodando, usa seu tempo vivo
+    if (isLive && task.status === 'em andamento' && task.subStatus === 'rodando') {
+      return sum + liveTaskSeconds;
+    }
+    // Senão, usa o tempo já salvo (para tarefas pausadas ou concluídas)
+    return sum + task.duracaoSegundos;
+  }, 0);
+
   const totalPauseDuration = displayTasks.reduce((sum, task) => sum + task.duracaoPausas, 0);
 
-  const aproveitamentoPercent = displayRoutine.duracaoSegundos > 0
-    ? (totalTaskDuration / displayRoutine.duracaoSegundos) * 100
+  const aproveitamentoPercent = routineDurationForCalc > 0
+    ? (totalTaskDuration / routineDurationForCalc) * 100
     : 0;
 
+  // ... (outros cálculos agora usam as durações dinâmicas)
   const conclusaoPercent = displayRoutine.totalTarefas > 0
     ? (displayRoutine.tarefasConcluidas / displayRoutine.totalTarefas) * 100
     : 0;
   
-  const tempoPerdidoTotal = displayRoutine.duracaoSegundos - totalTaskDuration;
+  const tempoPerdidoTotal = routineDurationForCalc - totalTaskDuration;
   const tempoPerdidoSemTarefas = tempoPerdidoTotal - totalPauseDuration;
 
-  const percentPerdidoTotal = displayRoutine.duracaoSegundos > 0
-    ? (tempoPerdidoTotal / displayRoutine.duracaoSegundos) * 100
+  const percentPerdidoTotal = routineDurationForCalc > 0
+    ? (tempoPerdidoTotal / routineDurationForCalc) * 100
     : 0;
 
-  const percentPerdidoSemTarefas = tempoPerdidoTotal > 0
+  const percentPerdidoSemTarefas = tempoPerdidoTotal > 0 && tempoPerdidoTotal > 0
     ? (tempoPerdidoSemTarefas / tempoPerdidoTotal) * 100
     : 0;
 
-  const percentPerdidoDuranteTarefas = tempoPerdidoTotal > 0
+  const percentPerdidoDuranteTarefas = tempoPerdidoTotal > 0 && tempoPerdidoTotal > 0
     ? (totalPauseDuration / tempoPerdidoTotal) * 100
     : 0;
 
-
   return (
+    // ... (O JSX para exibir os dados não muda, ele apenas recebe os novos valores calculados)
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">Monitoramento de Desempenho</h1>
       
-      <Card>
-        <h2 className="text-lg font-semibold mb-3">Aproveitamento</h2>
+      <Card className='flex flex-col'>
+        <h2 className="text-lg  text-center font-semibold mb-3">Aproveitamento</h2>
         <ProgressBar progress={aproveitamentoPercent} />
-        <div className="flex justify-between text-sm mt-2 text-gray-300">
-          <span>Rotina: {formatTime(displayRoutine.duracaoSegundos)}</span>
+        <div className="flex  justify-between text-sm mt-2 text-gray-300">
+          <span>Rotina: {formatTime(routineDurationForCalc)}</span>
           <span>Tarefas: {formatTime(totalTaskDuration)}</span>
         </div>
       </Card>
 
-      <Card>
-        <h2 className="text-lg font-semibold mb-3">Conclusão de Tarefas</h2>
+      <Card className='flex-col'>
+        <h2 className="text-lg  text-center font-semibold mb-3">Conclusão de Tarefas</h2>
         <ProgressBar progress={conclusaoPercent} />
-        <div className="flex justify-between text-sm mt-2 text-gray-300">
+        <div className="flex  justify-between text-sm mt-2 text-gray-300">
           <span>Total de Tarefas: {displayRoutine.totalTarefas}</span>
           <span>Tarefas Concluídas: {displayRoutine.tarefasConcluidas}</span>
         </div>
       </Card>
 
-      <Card>
-        <h2 className="text-lg font-semibold mb-3">Tempo Perdido Detalhes</h2>
+      <Card className='flex-col'>
+        <h2 className="text-lg  text-center font-semibold mb-3">Tempo Perdido Detalhes</h2>
         <div className="space-y-4">
-          <div>
+          <div className='flex'>
             <div className="flex justify-between text-sm mb-1 text-gray-300">
               <span>Sem Tarefas: {formatTime(tempoPerdidoSemTarefas)}</span>
             </div>
             <ProgressBar progress={percentPerdidoSemTarefas} label={`${Math.round(percentPerdidoSemTarefas)}%`} />
           </div>
-          <div>
+          <div className='flex'>
             <div className="flex justify-between text-sm mb-1 text-gray-300">
-              <span>Durante Tarefas: {formatTime(totalPauseDuration)}</span>
+              <span>Pausas: {formatTime(totalPauseDuration)}</span>
             </div>
             <ProgressBar progress={percentPerdidoDuranteTarefas} label={`${Math.round(percentPerdidoDuranteTarefas)}%`} />
           </div>
-          <div>
-            <div className="flex justify-between text-sm mb-1 font-bold">
+          <div className='flex'>
+            <div className="flex justify-between text-sm mb-1 text-gray-300 ">
               <span>Total Perdido: {formatTime(tempoPerdidoTotal)}</span>
             </div>
             <ProgressBar progress={percentPerdidoTotal} label={`${Math.round(percentPerdidoTotal)}%`} />

@@ -15,7 +15,7 @@ export interface Tarefa {
     usuarioId: string;
     rotinaId: string;
     nome: string;
-    data: Timestamp;
+    dataCriacao: Timestamp;
     status: StatusTarefa;
     subStatus?: SubStatusTarefa;
     inicioTarefa?: Timestamp;
