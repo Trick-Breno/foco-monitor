@@ -109,7 +109,7 @@ export function TaskCard({
 
   return (
     <Card >
-      <div className="flex-grow">
+      <div className="flex flex-grow items-center">
         {taskNameComponent}
       </div>
       <div className='flex items-center gap-2'>

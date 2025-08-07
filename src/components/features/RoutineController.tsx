@@ -26,10 +26,10 @@ export function RoutineController() {
     }
 
     return (
-        <Card className="mb-4">
+        <Card className=" mb-4 flex justify-center  ">
             <div className="flex justify-between items-center">
                 {activeRoutine && (
-                    <span className="text-base font-bold mr-4">{formatTime(liveRoutineSeconds)}</span>
+                    <span className="text-xl font-bold mr-4">{formatTime(liveRoutineSeconds)}</span>
                 )}
                 {activeRoutine.status === 'criada' && (
                     <Botao onClick={() => handleStartRoutine(activeRoutine.rotinaId)} className=" px-6 py-3">
