@@ -12,7 +12,3 @@ export function Card({className, children, ...props}: CardProps) {
         </div>
     );
 }
-
-/*
-define a estrutura do card
-*/
