@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Botao } from '@/components/ui/Botao';
 import { Tarefa } from '@/types';
-import { useTimer } from '@/hooks/useTimer';
 import { formatTime } from '@/utils/formatTime';
 import { useRoutine } from '@/contexts/RoutineContext';
 

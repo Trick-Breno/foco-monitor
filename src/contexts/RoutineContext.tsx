@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Tarefa, Rotina, StatusTarefa, SubStatusTarefa, StatusRotina } from '@/types';
+import { Tarefa, Rotina} from '@/types';
 import { db } from '@/lib/firebase/config';
 import {
   collection,
