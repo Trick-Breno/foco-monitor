@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 
-interface LayoutProps extends React.HTMLAttributes<HTMLDivElement> {}
+type LayoutProps = React.HTMLAttributes<HTMLDivElement>;
 
 export function Layout({ className, children, ...props }: LayoutProps) {
   return (
