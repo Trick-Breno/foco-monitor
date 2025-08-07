@@ -6,7 +6,7 @@ import { Botao } from '@/components/ui/Botao';
 import { Tarefa } from '@/types';
 import { useTimer } from '@/hooks/useTimer';
 import { formatTime } from '@/utils/formatTime';
-import { Timestamp } from 'firebase/firestore';
+import { useRoutine } from '@/contexts/RoutineContext';
 
 interface TaskCardProps {
   task: Tarefa;
@@ -29,18 +29,7 @@ export function TaskCard({
   onUpdateTaskName,
   isStartDisabled = false,
 }: TaskCardProps) {
-
-  const elapsedSeconds = useTimer({
-    isRunning: task.status === 'em andamento' && task.subStatus === 'rodando',
-    startTime: task.inicioTarefa,
-    savedDuration: task.duracaoSegundos,
-  }); 
-
-    const pausaSeconds = useTimer({
-    isRunning: task.status === 'em andamento' && task.subStatus === 'pausada',
-    startTime: task.inicioRef,
-    savedDuration: - task.duracaoSegundos ,
-  }); 
+ const { liveTaskSeconds } = useRoutine(); // Pega o tempo "vivo" do contexto
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(task.nome);
@@ -77,15 +66,17 @@ export function TaskCard({
     </span>
   );
 
-  if (task.status === 'em andamento' && task.subStatus === 'rodando') { //&& task.subStatus === 'rodando' remover depois do teste abaixo
+    const isCurrentActiveTask = task.status === 'em andamento' && task.subStatus === 'rodando';
+
+  if (task.status === 'em andamento') { //&& task.subStatus === 'rodando' remover depois do teste abaixo
     return (
-      <Card className="inline ring-2 ring-blue-500 shadow-lg">
+      <Card className="inline ring-2 ring-violet-800 shadow-lg mb-6 mt-6 ">
         <div className="flex justify-between items-center mb-4">
           {taskNameComponent}
         </div>
         <div className="flex justify-between items-center">
           <span className="text-2xl font-bold">
-            {formatTime(elapsedSeconds)}
+            {isCurrentActiveTask ? formatTime(liveTaskSeconds) : formatTime(task.duracaoSegundos)}
           </span>
           <div className="flex gap-2">
             {task.subStatus === 'rodando' ? (
@@ -103,36 +94,10 @@ export function TaskCard({
       </Card>
     );
   }
-  //testando mostrar tempo pausa
-  if (task.status === 'em andamento' && task.subStatus === 'pausada') {
-    return (
-      <Card className="inline ring-2 ring-blue-500 shadow-lg">
-        <div className="flex justify-between items-center mb-4">
-          {taskNameComponent}
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="text-2xl font-bold">
-            {formatTime(elapsedSeconds)}
-          </span>
-          <span className="text-lg opacity-60">
-            {formatTime(pausaSeconds)}
-          </span>
-          <div className="flex gap-2">
-
-              <Botao variant="secondary" onClick={onResumeClick}>
-                Continuar
-              </Botao>
-            
-            <Botao onClick={onCompleteClick}>Concluir</Botao>
-          </div>
-        </div>
-      </Card>
-    );
-  } // aqui acaba codigo teste
 
   if (task.status === 'concluida') {
     return (
-        <Card className="bg-gray-700 opacity-60 flex justify-between items-center">
+        <Card className="bg-gray-700 opacity-60 flex justify-between items-center hidden">
           <span className="font-semibold line-through">{task.nome}</span>
           <span className="text-sm">{formatTime(task.duracaoSegundos)}</span>
           <Botao onClick={onDeleteClick} variant='secondary' className='px-2 py-1 text-xs'> X </Botao>

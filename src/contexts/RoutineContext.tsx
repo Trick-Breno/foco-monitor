@@ -22,6 +22,8 @@ interface RoutineContextType {
   tasks: Tarefa[];
   activeRoutine: Rotina | null;
   isAnyTaskActive: boolean;
+  liveRoutineSeconds: number; // Novo: Tempo "vivo" da rotina
+  liveTaskSeconds: number; // Novo: Tempo "vivo" da tarefa ativa
   handleCreateRoutine: () => void;
   handleStartRoutine: (routineId: string) => void;
   handleCompleteRoutine: (routineId: string) => void;
@@ -43,6 +45,9 @@ interface RoutineProviderProps {
 export function RoutineProvider({ children }: RoutineProviderProps) {
   const [tasks, setTasks] = useState<Tarefa[]>([]);
   const [activeRoutine, setActiveRoutine] = useState<Rotina | null>(null);
+
+  const [liveRoutineSeconds, setLiveRoutineSeconds] = useState(0);
+  const [liveTaskSeconds, setLiveTaskSeconds] = useState(0);
 
   useEffect(() => {
     const routinesQuery = query (
@@ -79,13 +84,87 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
           tarefaId: doc.id,
           ...(doc.data() as Omit<Tarefa, 'tarefaId'>),
         }));
-        setTasks(tasksData);
+
+        // AQUI ESTÁ A NOVA LÓGICA DE ORDENAÇÃO
+        const sortedTasks = tasksData.sort((a, b) => {
+          // Mapeia o status para um valor numérico de ordenação
+          const statusOrder = {
+            'em andamento': 1,
+            'pendente': 2,
+            'concluida': 3,
+          };
+
+          // Regra 1 e parte da 2 e 3: Ordena por status
+          if (statusOrder[a.status] < statusOrder[b.status]) return -1;
+          if (statusOrder[a.status] > statusOrder[b.status]) return 1;
+
+          // Se os status são os mesmos, aplica as regras secundárias
+          // Regra 2: Pendentes são ordenadas pela data de criação (mais antiga primeiro)
+          if (a.status === 'pendente') {
+            const dateA = a.dataCriacao?.toMillis() || 0;
+            const dateB = b.dataCriacao?.toMillis() || 0;
+            return dateA - dateB; // Ordem ascendente
+          }
+
+          // Regra 3: Concluídas são ordenadas pela data de conclusão (mais nova primeiro)
+          if (a.status === 'concluida') {
+            const dateA = a.fimTarefa?.toMillis() || 0;
+            const dateB = b.fimTarefa?.toMillis() || 0;
+            return dateB - dateA; // Ordem descendente
+          }
+
+          return 0; // Mantém a ordem se nenhuma regra se aplicar
+        });
+
+        setTasks(sortedTasks);
       });
 
       return () => unsubscribeTasks();
     }
-    
+
   }, [activeRoutine]);
+
+  // Novo useEffect: O "Coração" da Aplicação
+  useEffect(() => {
+
+    const intervalId = setInterval(() => {
+      // Calcula o tempo da rotina
+      if (activeRoutine?.status === 'em andamento' && activeRoutine.inicioRotina) {
+        const now = Date.now();
+        const startTime = activeRoutine.inicioRotina.toDate().getTime();
+        setLiveRoutineSeconds(Math.round((now - startTime) / 1000));
+      } else {
+        setLiveRoutineSeconds( 0);
+      }
+
+      // Calcula o tempo da tarefa ativa
+      const runningTask = tasks.find(
+        (task) => task.status === 'em andamento' && task.subStatus === 'rodando'
+      );
+
+      if (runningTask && runningTask.inicioTarefa) {
+        // Cenário 1: Uma tarefa está ATIVAMENTE RODANDO
+        const now = Date.now();
+        const startTime = runningTask.inicioTarefa.toDate().getTime();
+        const secondsPassed = Math.round((now - startTime) / 1000);
+        setLiveTaskSeconds(runningTask.duracaoSegundos + secondsPassed);
+      } else {
+        // Cenário 2: Nenhuma tarefa está rodando. Está pausada ou não há tarefa ativa?
+        const pausedTask = tasks.find(
+          (task) => task.status === 'em andamento' && task.subStatus === 'pausada'
+        );
+        if (pausedTask) {
+          // Se houver uma tarefa pausada, mostra seu tempo salvo.
+          setLiveTaskSeconds(pausedTask.duracaoSegundos);
+        } else {
+          // Se não houver tarefa nem rodando nem pausada, zera o cronômetro.
+          setLiveTaskSeconds(0);
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [tasks, activeRoutine]); // Roda a cada segundo e quando os dados mudam
 
   const handleCreateRoutine = async () => {
     if (activeRoutine) {
@@ -153,7 +232,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
       rotinaId: activeRoutine.rotinaId,
       usuarioId: '1',
       nome: taskName.trim(),
-      data: Timestamp.now(),
+      dataCriacao: Timestamp.now(),
       status: 'pendente',
       duracaoPausas: 0,
       duracaoSegundos: 0,
@@ -306,6 +385,8 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     tasks,
     activeRoutine,
     isAnyTaskActive,
+    liveRoutineSeconds, // Transmite os novos valores
+    liveTaskSeconds,    // Transmite os novos valores
     handleCreateRoutine,
     handleStartRoutine,
     handleCompleteRoutine,
