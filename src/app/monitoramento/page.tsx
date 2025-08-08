@@ -15,10 +15,11 @@ import {
 import { Card } from '@/components/ui/Card';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { formatTime } from '@/utils/formatTime';
+import { Botao } from '@/components/ui/Botao';
 
 export default function MonitoramentoPage() {
   // 1. Pegar os valores "vivos" do contexto
-  const { activeRoutine, liveRoutineSeconds, liveTaskSeconds } = useRoutine();
+  const { activeRoutine, handleReopenTask, liveRoutineSeconds, liveTaskSeconds } = useRoutine();
 
   const [displayRoutine, setDisplayRoutine] = useState<Rotina | null>(null);
   const [displayTasks, setDisplayTasks] = useState<Tarefa[]>([]);
@@ -123,6 +124,8 @@ export default function MonitoramentoPage() {
     ? (totalPauseDuration / tempoPerdidoTotal) * 100
     : 0;
 
+  const completedTasks = displayTasks.filter((task) => task.status === 'concluida');
+
   return (
     // ... (O JSX para exibir os dados não muda, ele apenas recebe os novos valores calculados)
     <div className="flex flex-col gap-6">
@@ -168,6 +171,44 @@ export default function MonitoramentoPage() {
             <ProgressBar progress={percentPerdidoTotal} label={`${Math.round(percentPerdidoTotal)}%`} />
           </div>
         </div>
+      </Card>
+      <Card className="flex flex-col">
+          {completedTasks.map((task) => {
+    // CALCULE A PORCENTAGEM AQUI DENTRO, PARA CADA TAREFA
+    const taskPercent = routineDurationForCalc > 0 
+      ? (task.duracaoSegundos / routineDurationForCalc) * 100 
+      : 0;
+
+    return (
+      <li
+        key={task.tarefaId}
+        className="flex gap-2 items-center text-gray-300 text-sm"
+      >
+        <div className='w-full'><span>{task.nome}</span></div>
+        <span className=" font-mono bg-gray-700 px-2 py-1 rounded">
+          {formatTime(task.duracaoSegundos)}
+        </span>
+        {/* USE A PORCENTAGEM CALCULADA AQUI */}
+        <div className="flex w-full gap-2 bg-gray-700 rounded-full h-6 relative overflow-hidden" >
+          <div className="bg-violet-800  h-6 rounded-full text-center text-white text-xs font-semibold flex items-center justify-end pr-2 transition-all duration-500" style={{ width:`${Math.round(taskPercent)}%`}}> </div> 
+          {`${Math.round(taskPercent)}%`}
+        </div>
+                {displayRoutine.status !== 'concluida' && (
+                  <Botao
+                    variant="secondary"
+                    className="px-2 py-1 text-xs"
+                    onClick={() => handleReopenTask(task.tarefaId)}
+                  >
+                    Continuar
+                  </Botao>
+                )}
+                
+      </li>
+    );
+  })}
+  {completedTasks.length === 0 && (
+    <p className="text-gray-500 text-sm">Nenhuma tarefa foi concluída.</p>
+  )}
       </Card>
     </div>
   );

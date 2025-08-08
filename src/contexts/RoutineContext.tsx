@@ -16,6 +16,7 @@ import {
   where,
   limit,
   increment,
+  deleteField,
 } from 'firebase/firestore';
 
 interface RoutineContextType {
@@ -31,6 +32,7 @@ interface RoutineContextType {
   handlePauseTask: (taskId: string) => void;
   handleResumeTask: (taskId: string) => void;
   handleCompleteTask: (taskId: string) => void;
+  handleReopenTask: (taskId: string) => void;
   handleAddTask: (taskName: string) => void;
   handleDeleteTask: (taskId: string) => void;
   handleUpdateTaskName: (taskId: string, newName: string) => void;
@@ -297,6 +299,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
 
     try {
       await updateDoc(taskDocRef, {
+        status:'em andamento',
         subStatus: 'rodando',
         duracaoPausas: pauseDuration,
         inicioTarefa: serverTimestamp(),
@@ -379,6 +382,29 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     }
   };
 
+    const handleReopenTask = async (taskId: string) => {
+    if (!activeRoutine) return;
+
+    const taskDocRef = doc(db, 'tasks', taskId);
+    const routineDocRef = doc(db, 'routines', activeRoutine.rotinaId);
+
+    try {
+      // Atualiza a tarefa
+      await updateDoc(taskDocRef, {
+        status: 'em andamento',
+        subStatus: 'rodando',
+        inicioTarefa: serverTimestamp(),
+        fimTarefa: deleteField(),
+      });
+      await updateDoc(routineDocRef, {
+        tarefasConcluidas: increment(-1),
+      });
+    } catch (error) {
+      console.error('Erro ao reabrir a tarefa:', error);
+    }
+  };
+
+
   const isAnyTaskActive = tasks.some((task) => task.status === 'em andamento');
 
   const value = {
@@ -397,6 +423,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     handleAddTask,
     handleDeleteTask,
     handleUpdateTaskName,
+    handleReopenTask,
   };
 
   return <RoutineContext.Provider value={value}>{children}</RoutineContext.Provider>;
