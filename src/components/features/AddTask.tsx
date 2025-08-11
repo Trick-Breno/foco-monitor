@@ -21,7 +21,7 @@ export function AddTask() {
                 value={newTaskName}
                 onChange={(e) => setNewTaskName(e.target.value)}
                 placeholder="Nome da nova tarefa"
-                className="flex-grow text-white px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-grow text-white px-3 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
             />
             <Botao type="submit">Adicionar</Botao>
         </form>

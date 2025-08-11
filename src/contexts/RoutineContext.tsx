@@ -258,7 +258,6 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
         status: 'em andamento',
         subStatus: 'rodando',
         inicioTarefa: serverTimestamp(),
-        inicioRef: serverTimestamp(),
         duracaoSegundos: 0,
         duracaoPausas: 0,
       });
@@ -280,6 +279,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
       await updateDoc(taskDocRef, {
         subStatus: 'pausada',
         duracaoSegundos: newDuration,
+        inicioPausa: serverTimestamp(),
         inicioTarefa: null,
       });
     } catch (error) {
@@ -291,10 +291,10 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     const taskDocRef = doc(db, 'tasks', taskId);
     const taskToResume = tasks.find((task) => task.tarefaId === taskId);
 
-    if (!taskToResume || !taskToResume.inicioRef) return;
+    if (!taskToResume || !taskToResume.inicioPausa) return;
 
-    const secondsPassed = Date.now() - taskToResume.inicioRef.toDate().getTime();
-    const pauseDuration = Math.round((secondsPassed) / 1000) - taskToResume.duracaoSegundos;
+    const secondsPassed = Date.now() - taskToResume.inicioPausa.toDate().getTime();
+    const pauseDuration = taskToResume.duracaoPausas + Math.round((secondsPassed) / 1000);
 
 
     try {
@@ -302,6 +302,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
         status:'em andamento',
         subStatus: 'rodando',
         duracaoPausas: pauseDuration,
+        inicioPausa: null,
         inicioTarefa: serverTimestamp(),
       });
     } catch (error) {
@@ -313,13 +314,15 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     const taskDocRef = doc(db, 'tasks', taskId);
     const taskToComplete = tasks.find((task) => task.tarefaId === taskId);
 
-    if (!taskToComplete || !taskToComplete.inicioRef )  return;
+    if (!taskToComplete)  return;
 
     let pauseDuration = taskToComplete.duracaoPausas ;
     
-    if ( taskToComplete.subStatus === 'pausada') {
-      const secondsPassed = Date.now() - taskToComplete.inicioRef.toDate().getTime();
-      pauseDuration = Math.round((secondsPassed) / 1000) - taskToComplete.duracaoSegundos;
+    if ( taskToComplete.subStatus === 'pausada' ) {
+      if (!taskToComplete.inicioPausa )  return;
+
+      const secondsPassed = Date.now() - taskToComplete.inicioPausa.toDate().getTime();
+      pauseDuration = taskToComplete.duracaoPausas + Math.round((secondsPassed) / 1000);
     }
     
     let finalDuration = taskToComplete.duracaoSegundos; // se a tarefa estiver subStatus 'pausada' nao precisa de fazer calculo
@@ -336,6 +339,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
         fimTarefa: serverTimestamp(),
         duracaoPausas: pauseDuration,
         duracaoSegundos: finalDuration,
+        inicioPausa: null,
         inicioTarefa: null,
       });
 

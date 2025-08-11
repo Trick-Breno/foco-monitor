@@ -22,7 +22,7 @@ export interface Tarefa {
     fimTarefa?: Timestamp;
     duracaoSegundos: number;
     duracaoPausas: number;
-    inicioRef?: Timestamp; // referencia para calcular a duração das pausas
+    inicioPausa?: Timestamp; // referencia para calcular a duração das pausas
 };
 
 export interface Rotina {

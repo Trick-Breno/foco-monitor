@@ -14,7 +14,7 @@ export function Layout({ className, children, ...props }: LayoutProps) {
       <main className="flex-grow p-4 pb-20">{children}</main>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700">
-        <div className="flex justify-center max-w-4xl mx-auto">
+        <div className="flex justify-center items-center max-w-4xl mx-auto">
             <Link href="/" className="p-4 text-center text-sm w-full hover:bg-gray-700 transition-colors">
                 Central de Tarefas
             </Link>

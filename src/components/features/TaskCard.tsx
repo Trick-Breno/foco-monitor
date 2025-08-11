@@ -112,10 +112,10 @@ export function TaskCard({
         {taskNameComponent}
       </div>
       <div className='flex items-center gap-2'>
-        <Botao onClick={onStartClick} disabled={isStartDisabled}>
-          Iniciar
+        <Botao  onClick={onStartClick} disabled={isStartDisabled}>
+          <span className='text-gray-200'>Iniciar</span> 
         </Botao>
-        <Botao onClick={onDeleteClick} variant='secondary' className='px-2 py-1 text-xs'>
+        <Botao onClick={onDeleteClick} variant='secondary' className='border-hidden px-2 py-1 text-xs'>
           X
         </Botao>
       </div>
