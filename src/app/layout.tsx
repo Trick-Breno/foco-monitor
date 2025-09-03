@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google';
 import "./globals.css";
 import { Layout } from '@/components/layout/Layout';
 import { RoutineProvider } from "@/contexts/RoutineContext";
+import { AuthProvider } from '@/contexts/AuthContext'; // 1. Importar o AuthProvider
+
 
 const inter = Inter({subsets: ['latin']});
 
@@ -16,9 +18,11 @@ export default function RootLayout({children,}: Readonly<{
   return (
     <html lang="pt-br" suppressHydrationWarning>
       <body className={inter.className}>
-        <RoutineProvider>
-          <Layout>{children}</Layout>
-        </RoutineProvider>
+        <AuthProvider>
+          <RoutineProvider>
+            <Layout>{children}</Layout>
+          </RoutineProvider>
+        </AuthProvider>
       </body>
     </html>
   );

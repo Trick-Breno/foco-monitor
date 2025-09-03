@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Tarefa, Rotina} from '@/types';
 import { db } from '@/lib/firebase/config';
+import { useAuth } from './AuthContext'; // 1. Importar o hook de autenticação
 import {
   collection,
   onSnapshot,
@@ -45,6 +46,7 @@ interface RoutineProviderProps {
 }
 
 export function RoutineProvider({ children }: RoutineProviderProps) {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<Tarefa[]>([]);
   const [activeRoutine, setActiveRoutine] = useState<Rotina | null>(null);
 
@@ -52,8 +54,16 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
   const [liveTaskSeconds, setLiveTaskSeconds] = useState(0);
 
   useEffect(() => {
-    const routinesQuery = query (
+    if (!user) { // Se não houver usuário, limpa tudo
+      setActiveRoutine(null);
+      setTasks([]);
+      return;
+    }
+
+    // 3. ATUALIZAR a query para filtrar pelo usuário LOGADO
+    const routinesQuery = query(
       collection(db, 'routines'),
+      where('usuarioId', '==', user.uid), // Apenas rotinas deste usuário
       where('status', 'in', ['criada', 'em andamento']),
       limit(1)
     );
@@ -68,17 +78,25 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
           ...(snapshot.docs[0].data() as Omit<Rotina, 'rotinaId'>),
         };
         setActiveRoutine(routineData);
+        }
+      },
+      (error) => {
+        // ATENÇÃO: Este log de erro é onde o aviso do índice aparecerá
+        console.error("Erro no listener de rotinas:", error);
+        setActiveRoutine(null);
+        setTasks([]);
       }
-    });
+    );
 
     return () => unsubscribeRoutines();
-  }, []);
-
+  }, [user]);
+  
   useEffect(() => {
-    if (activeRoutine) {
+    if (activeRoutine && user) {
       const tasksQuery = query(
         collection(db, 'tasks'), 
         where('rotinaId', '==', activeRoutine.rotinaId),
+        where('usuarioId', '==', user.uid)
       );
 
       const unsubscribeTasks = onSnapshot(tasksQuery, (snapshot) => {
@@ -124,7 +142,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
       return () => unsubscribeTasks();
     }
 
-  }, [activeRoutine]);
+  }, [activeRoutine, user]);
 
   // Novo useEffect: O "Coração" da Aplicação
   useEffect(() => {
@@ -169,13 +187,14 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
   }, [tasks, activeRoutine]); // Roda a cada segundo e quando os dados mudam
 
   const handleCreateRoutine = async () => {
+    if (!user) return;
     if (activeRoutine) {
       alert('Ja existe uma rotina. Conclua a rotina atual para criar uma nova.');
       return;
     }
 
     const newRoutine: Omit<Rotina, 'rotinaId'> = {
-    usuarioId: '1',
+    usuarioId: user.uid,
     data: Timestamp.now(),
     status: 'criada',
     duracaoSegundos: 0,
@@ -228,11 +247,11 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
   };
 
   const handleAddTask = async (taskName: string) => {
-    if (!taskName.trim() || !activeRoutine) return;
+    if (!taskName.trim() || !activeRoutine || !user) return;
 
     const newTask: Omit<Tarefa, 'tarefaId'> = {
       rotinaId: activeRoutine.rotinaId,
-      usuarioId: '1',
+      usuarioId: user.uid,
       nome: taskName.trim(),
       dataCriacao: Timestamp.now(),
       status: 'pendente',

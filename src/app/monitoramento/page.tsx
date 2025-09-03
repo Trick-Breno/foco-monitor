@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRoutine } from '@/contexts/RoutineContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Rotina, Tarefa } from '@/types';
 import { db } from '@/lib/firebase/config';
 import {
@@ -20,6 +21,7 @@ import { Botao } from '@/components/ui/Botao';
 export default function MonitoramentoPage() {
   // 1. Pegar os valores "vivos" do contexto
   const { activeRoutine, handleReopenTask, liveRoutineSeconds, liveTaskSeconds } = useRoutine();
+  const { user } = useAuth();
 
   const [displayRoutine, setDisplayRoutine] = useState<Rotina | null>(null);
   const [displayTasks, setDisplayTasks] = useState<Tarefa[]>([]);
@@ -30,10 +32,11 @@ export default function MonitoramentoPage() {
       setIsLoading(true);
       if (activeRoutine) {
         setDisplayRoutine(activeRoutine);
-      } else {
+      } else if (user) {
         const routinesQuery = query(
           collection(db, 'routines'),
           where('status', '==', 'concluida'),
+          where('usuarioId', '==', user.uid),
           orderBy('fimRotina', 'desc'),
           limit(1)
         );
@@ -52,7 +55,7 @@ export default function MonitoramentoPage() {
     };
 
     fetchRoutineData();
-  }, [activeRoutine]);
+  }, [activeRoutine, user]);
 
   useEffect(() => {
     // A lógica para buscar as tarefas associadas não muda
