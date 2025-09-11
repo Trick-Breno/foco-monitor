@@ -23,9 +23,9 @@ import {
 interface RoutineContextType {
   tasks: Tarefa[];
   activeRoutine: Rotina | null;
-  isAnyTaskActive: boolean;
   liveRoutineSeconds: number; // Novo: Tempo "vivo" da rotina
   liveTaskSeconds: number; // Novo: Tempo "vivo" da tarefa ativa
+  isAnyTaskRunning: boolean;
   handleCreateRoutine: () => void;
   handleStartRoutine: (routineId: string) => void;
   handleCompleteRoutine: (routineId: string) => void;
@@ -52,6 +52,10 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
 
   const [liveRoutineSeconds, setLiveRoutineSeconds] = useState(0);
   const [liveTaskSeconds, setLiveTaskSeconds] = useState(0);
+
+    const isAnyTaskRunning = tasks.some(
+    (task) => task.status === 'em andamento' && task.subStatus === 'rodando'
+    );
 
   useEffect(() => {
     if (!user) { // Se não houver usuário, limpa tudo
@@ -170,16 +174,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
         setLiveTaskSeconds(runningTask.duracaoSegundos + secondsPassed);
       } else {
         // Cenário 2: Nenhuma tarefa está rodando. Está pausada ou não há tarefa ativa?
-        const pausedTask = tasks.find(
-          (task) => task.status === 'em andamento' && task.subStatus === 'pausada'
-        );
-        if (pausedTask) {
-          // Se houver uma tarefa pausada, mostra seu tempo salvo.
-          setLiveTaskSeconds(pausedTask.duracaoSegundos);
-        } else {
-          // Se não houver tarefa nem rodando nem pausada, zera o cronômetro.
-          setLiveTaskSeconds(0);
-        }
+        setLiveTaskSeconds(0);
       }
     }, 1000);
 
@@ -222,8 +217,8 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
   };
 
   const handleCompleteRoutine = async (routineId: string) => {
-    if (isAnyTaskActive){
-      alert('Antes de encerrar rotina, finalize a tarefa em andamento.');
+    if (tasks.some((task) => task.status === 'em andamento')){
+      alert('Antes de encerrar a rotina, finalize a tarefa em andamento.');
       return;
     }
 
@@ -271,6 +266,8 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
   };
 
   const handleStartTask = async (taskId: string) => {
+    if (isAnyTaskRunning) return;
+
     const taskDocRef = doc(db, 'tasks', taskId);
     try {
       await updateDoc(taskDocRef, {
@@ -298,7 +295,6 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
       await updateDoc(taskDocRef, {
         subStatus: 'pausada',
         duracaoSegundos: newDuration,
-        inicioPausa: serverTimestamp(),
         inicioTarefa: null,
       });
     } catch (error) {
@@ -310,18 +306,12 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
     const taskDocRef = doc(db, 'tasks', taskId);
     const taskToResume = tasks.find((task) => task.tarefaId === taskId);
 
-    if (!taskToResume || !taskToResume.inicioPausa) return;
-
-    const secondsPassed = Date.now() - taskToResume.inicioPausa.toDate().getTime();
-    const pauseDuration = taskToResume.duracaoPausas + Math.round((secondsPassed) / 1000);
-
+    if (!taskToResume || taskToResume.subStatus !== 'pausada') return;
 
     try {
       await updateDoc(taskDocRef, {
         status:'em andamento',
         subStatus: 'rodando',
-        duracaoPausas: pauseDuration,
-        inicioPausa: null,
         inicioTarefa: serverTimestamp(),
       });
     } catch (error) {
@@ -335,15 +325,6 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
 
     if (!taskToComplete)  return;
 
-    let pauseDuration = taskToComplete.duracaoPausas ;
-    
-    if ( taskToComplete.subStatus === 'pausada' ) {
-      if (!taskToComplete.inicioPausa )  return;
-
-      const secondsPassed = Date.now() - taskToComplete.inicioPausa.toDate().getTime();
-      pauseDuration = taskToComplete.duracaoPausas + Math.round((secondsPassed) / 1000);
-    }
-    
     let finalDuration = taskToComplete.duracaoSegundos; // se a tarefa estiver subStatus 'pausada' nao precisa de fazer calculo
 
     if (taskToComplete.status === 'em andamento' && taskToComplete.inicioTarefa) {
@@ -355,10 +336,7 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
       await updateDoc(taskDocRef, {
         status: 'concluida',
         subStatus: null,
-        fimTarefa: serverTimestamp(),
-        duracaoPausas: pauseDuration,
         duracaoSegundos: finalDuration,
-        inicioPausa: null,
         inicioTarefa: null,
       });
 
@@ -428,14 +406,13 @@ export function RoutineProvider({ children }: RoutineProviderProps) {
   };
 
 
-  const isAnyTaskActive = tasks.some((task) => task.status === 'em andamento');
 
   const value = {
     tasks,
     activeRoutine,
-    isAnyTaskActive,
     liveRoutineSeconds, // Transmite os novos valores
-    liveTaskSeconds,    // Transmite os novos valores
+    liveTaskSeconds, 
+    isAnyTaskRunning,
     handleCreateRoutine,
     handleStartRoutine,
     handleCompleteRoutine,

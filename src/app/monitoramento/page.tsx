@@ -20,7 +20,7 @@ import { Botao } from '@/components/ui/Botao';
 
 export default function MonitoramentoPage() {
   // 1. Pegar os valores "vivos" do contexto
-  const { activeRoutine, handleReopenTask, liveRoutineSeconds, liveTaskSeconds } = useRoutine();
+  const { activeRoutine, handleReopenTask, liveRoutineSeconds, liveTaskSeconds, tasks: contextTasks } = useRoutine();
   const { user } = useAuth();
 
   const [displayRoutine, setDisplayRoutine] = useState<Rotina | null>(null);
@@ -60,21 +60,26 @@ export default function MonitoramentoPage() {
   useEffect(() => {
     // A lógica para buscar as tarefas associadas não muda
     if (displayRoutine) {
-      const fetchTasks = async () => {
-        const tasksQuery = query(
-          collection(db, 'tasks'),
-          where('rotinaId', '==', displayRoutine.rotinaId)
-        );
-        const tasksSnapshot = await getDocs(tasksQuery);
-        const tasksData = tasksSnapshot.docs.map((doc) => ({
-          tarefaId: doc.id,
-          ...(doc.data() as Omit<Tarefa, 'tarefaId'>),
-        }));
-        setDisplayTasks(tasksData);
-      };
-      fetchTasks();
+      if (activeRoutine && activeRoutine.rotinaId === displayRoutine.rotinaId) {
+        // Se a rotina em exibição é a ativa, usa as tarefas do contexto (em tempo real)
+        setDisplayTasks(contextTasks);
+      } else {
+        const fetchTasks = async () => {
+          const tasksQuery = query(
+            collection(db, 'tasks'),
+            where('rotinaId', '==', displayRoutine.rotinaId)
+          );
+          const tasksSnapshot = await getDocs(tasksQuery);
+          const tasksData = tasksSnapshot.docs.map((doc) => ({
+            tarefaId: doc.id,
+            ...(doc.data() as Omit<Tarefa, 'tarefaId'>),
+          }));
+          setDisplayTasks(tasksData);
+        };
+        fetchTasks();
+      }
     }
-  }, [displayRoutine]);
+  }, [displayRoutine, activeRoutine, contextTasks]);
 
   if (isLoading) {
     return <div className="text-center p-8">Carregando dados...</div>;
@@ -87,21 +92,20 @@ export default function MonitoramentoPage() {
   // --- LÓGICA DE CÁLCULO ATUALIZADA ---
   const isLive = !!activeRoutine; // É true se houver uma rotina ativa, senão false
 
-  // 2. Usar o tempo vivo se a rotina estiver ativa, senão o tempo salvo
-  const routineDurationForCalc = isLive
-    ? liveRoutineSeconds
-    : displayRoutine.duracaoSegundos;
+  const routineDurationForCalc = isLive ? liveRoutineSeconds : displayRoutine.duracaoSegundos;
 
   const totalTaskDuration = displayTasks.reduce((sum, task) => {
-    // Se a tarefa atual é a que está rodando, usa seu tempo vivo
-    if (isLive && task.status === 'em andamento' && task.subStatus === 'rodando') {
+    // Encontra a tarefa que está rodando
+    const runningTask = displayTasks.find(t => t.subStatus === 'rodando');
+
+    // Se a tarefa atual (do loop) for a que está rodando, usa o tempo vivo dela.
+    if (isLive && runningTask && task.tarefaId === runningTask.tarefaId) {
       return sum + liveTaskSeconds;
     }
-    // Senão, usa o tempo já salvo (para tarefas pausadas ou concluídas)
+    
+    // Senão, usa o tempo já salvo (para tarefas pausadas, concluídas ou pendentes)
     return sum + task.duracaoSegundos;
   }, 0);
-
-  const totalPauseDuration = displayTasks.reduce((sum, task) => sum + task.duracaoPausas, 0);
 
   const aproveitamentoPercent = routineDurationForCalc > 0
     ? (totalTaskDuration / routineDurationForCalc) * 100
@@ -113,18 +117,9 @@ export default function MonitoramentoPage() {
     : 0;
   
   const tempoPerdidoTotal = routineDurationForCalc - totalTaskDuration;
-  const tempoPerdidoSemTarefas = tempoPerdidoTotal - totalPauseDuration;
 
   const percentPerdidoTotal = routineDurationForCalc > 0
     ? (tempoPerdidoTotal / routineDurationForCalc) * 100
-    : 0;
-
-  const percentPerdidoSemTarefas = tempoPerdidoTotal > 0 && tempoPerdidoTotal > 0
-    ? (tempoPerdidoSemTarefas / tempoPerdidoTotal) * 100
-    : 0;
-
-  const percentPerdidoDuranteTarefas = tempoPerdidoTotal > 0 && tempoPerdidoTotal > 0
-    ? (totalPauseDuration / tempoPerdidoTotal) * 100
     : 0;
 
   const completedTasks = displayTasks.filter((task) => task.status === 'concluida');
@@ -154,25 +149,9 @@ export default function MonitoramentoPage() {
 
       <Card className='flex-col'>
         <h2 className="text-lg  text-center font-semibold mb-3">Tempo Perdido Detalhes</h2>
-        <div className="space-y-4">
-          <div className='flex'>
-            <div className="flex justify-between text-sm mb-1 text-gray-300">
-              <span>Sem Tarefas: {formatTime(tempoPerdidoSemTarefas)}</span>
-            </div>
-            <ProgressBar progress={percentPerdidoSemTarefas} label={`${Math.round(percentPerdidoSemTarefas)}%`} />
-          </div>
-          <div className='flex'>
-            <div className="flex justify-between text-sm mb-1 text-gray-300">
-              <span>Pausas: {formatTime(totalPauseDuration)}</span>
-            </div>
-            <ProgressBar progress={percentPerdidoDuranteTarefas} label={`${Math.round(percentPerdidoDuranteTarefas)}%`} />
-          </div>
-          <div className='flex'>
-            <div className="flex justify-between text-sm mb-1 text-gray-300 ">
-              <span>Total Perdido: {formatTime(tempoPerdidoTotal)}</span>
-            </div>
-            <ProgressBar progress={percentPerdidoTotal} label={`${Math.round(percentPerdidoTotal)}%`} />
-          </div>
+        <ProgressBar progress={percentPerdidoTotal} label={`${Math.round(percentPerdidoTotal)}%`} />
+        <div className="flex justify-between text-sm mt-2 text-gray-300 ">
+          <span>Total Perdido: {formatTime(tempoPerdidoTotal)}</span>
         </div>
       </Card>
       <Card className="flex flex-col">

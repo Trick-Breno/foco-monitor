@@ -67,7 +67,7 @@ export function TaskCard({
 
     const isCurrentActiveTask = task.status === 'em andamento' && task.subStatus === 'rodando';
 
-  if (task.status === 'em andamento') { //&& task.subStatus === 'rodando' remover depois do teste abaixo
+  if (task.status === 'em andamento') {
     return (
       <Card className="inline ring-2 ring-violet-800 shadow-lg mb-6 mt-6 ">
         <div className="flex justify-between items-center mb-4">
@@ -83,7 +83,7 @@ export function TaskCard({
                 Pausar
               </Botao>
             ) : (
-              <Botao variant="secondary" onClick={onResumeClick}>
+              <Botao variant="secondary" onClick={onResumeClick} disabled={isStartDisabled}>
                 Continuar
               </Botao>
             )}
@@ -105,7 +105,6 @@ export function TaskCard({
   }
 
  
-
   return (
     <Card >
       <div className="flex flex-grow items-center">
@@ -113,7 +112,7 @@ export function TaskCard({
       </div>
       <div className='flex items-center gap-2'>
         <Botao  onClick={onStartClick} disabled={isStartDisabled}>
-          <span className='text-gray-200'>Iniciar</span> 
+          <span className='text-gray-200'>Iniciar</span>
         </Botao>
         <Botao onClick={onDeleteClick} variant='secondary' className='border-hidden px-2 py-1 text-xs'>
           X
