@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTasks } from '@/contexts/TasksContext';
 import { useRoutines } from '@/contexts/RoutinesContext'; 
 import { useTimer } from '@/contexts/TimerContext';
 import { Card } from '../ui/Card';
@@ -11,13 +12,13 @@ import { formatTime } from '@/utils/formatTime';
 export function RoutineController() {
   const { 
     activeRoutine,
-    isLoading, // Usar o isLoading do novo contexto
+    isLoading, 
     handleCreateRoutine,
     handleStartRoutine,
     handleCompleteRoutine 
-  } = useRoutines(); // 2. Usar o novo hook
-
-  const { liveRoutineSeconds } = useTimer(); // Pega o tempo do TimerContext
+  } = useRoutines(); 
+  const { liveRoutineSeconds } = useTimer(); 
+  const { isAnyTaskRunning } = useTasks(); 
 
 
   if (isLoading) {
@@ -46,7 +47,7 @@ export function RoutineController() {
                 </Botao>
             )}
             {activeRoutine.status === 'em andamento' && (
-                <Botao onClick={() => handleCompleteRoutine(activeRoutine.rotinaId)} className="text-sm" variant="secondary">
+                <Botao onClick={() => handleCompleteRoutine(activeRoutine.rotinaId, isAnyTaskRunning)} className="text-sm" variant="secondary">
                     Encerrar Rotina
                 </Botao>
             )}

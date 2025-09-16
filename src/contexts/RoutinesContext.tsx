@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useTasks } from './TasksContext';
 import {Rotina, StatusRotina} from '@/types';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from './AuthContext';
@@ -23,7 +22,7 @@ interface RoutinesContextType {
   isLoading: boolean;
   handleCreateRoutine: () => void;
   handleStartRoutine: (routineId: string) => void;
-  handleCompleteRoutine: (routineId: string) => void;
+  handleCompleteRoutine: (routineId: string, isAnyTaskRunning: boolean) => void;
 }
 
 // analisar em manter isLoading no monitoramento e routinecontroller
@@ -35,7 +34,6 @@ interface RoutinesProviderProps {
 
 export function RoutinesProvider({ children }: RoutinesProviderProps) {
   const { user } = useAuth();
-  const { tasks } = useTasks();
   const [activeRoutine, setActiveRoutine] = useState<Rotina | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -105,8 +103,8 @@ export function RoutinesProvider({ children }: RoutinesProviderProps) {
     }
   };
 
-  const handleCompleteRoutine = async (routineId: string) => {
-    if (tasks.some((task) => task.status === 'em andamento')){
+  const handleCompleteRoutine = async (routineId: string, isAnyTaskRunning: boolean) => {
+    if (isAnyTaskRunning){
       alert('Antes de encerrar a rotina, finalize a tarefa em andamento.');
       return;
     }
