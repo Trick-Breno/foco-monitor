@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Botao } from '@/components/ui/Botao';
 import { Tarefa } from '@/types';
 import { formatTime } from '@/utils/formatTime';
-import { useRoutine } from '@/contexts/RoutineContext';
+import { useTimer } from '@/contexts/TimerContext';
 
 interface TaskCardProps {
   task: Tarefa;
@@ -28,7 +28,7 @@ export function TaskCard({
   onUpdateTaskName,
   isStartDisabled = false,
 }: TaskCardProps) {
- const { liveTaskSeconds } = useRoutine(); // Pega o tempo "vivo" do contexto
+ const { liveTaskSeconds } = useTimer(); // Pega o tempo "vivo" do contexto
 
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(task.nome);

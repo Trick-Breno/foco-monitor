@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRoutine } from '@/contexts/RoutineContext';
+import { useRoutines } from '@/contexts/RoutinesContext';
+import { useTasks } from '@/contexts/TasksContext';
+import { useTimer } from '@/contexts/TimerContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Rotina, Tarefa } from '@/types';
 import { db } from '@/lib/firebase/config';
@@ -20,7 +22,9 @@ import { Botao } from '@/components/ui/Botao';
 
 export default function MonitoramentoPage() {
   // 1. Pegar os valores "vivos" do contexto
-  const { activeRoutine, handleReopenTask, liveRoutineSeconds, liveTaskSeconds, tasks: contextTasks } = useRoutine();
+  const { activeRoutine } = useRoutines();
+  const {handleReopenTask,  tasks: contextTasks} = useTasks();
+  const { liveRoutineSeconds, liveTaskSeconds } = useTimer();
   const { user } = useAuth();
 
   const [displayRoutine, setDisplayRoutine] = useState<Rotina | null>(null);

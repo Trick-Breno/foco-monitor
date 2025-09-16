@@ -1,27 +1,35 @@
-import type { Metadata } from "next";
+import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import "./globals.css";
+import './globals.css';
 import { Layout } from '@/components/layout/Layout';
-import { RoutineProvider } from "@/contexts/RoutineContext";
-import { AuthProvider } from '@/contexts/AuthContext'; // 1. Importar o AuthProvider
+import { TasksProvider } from '@/contexts/TasksContext';
+import { RoutinesProvider } from '@/contexts/RoutinesContext';
+import { TimerProvider } from '@/contexts/TimerContext';
+import { AuthProvider } from '@/contexts/AuthContext';
 
-
-const inter = Inter({subsets: ['latin']});
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "Foco Monitor",
-  description: "Monitore sua rotina e suas tarefas",
+  title: 'Foco Monitor',
+  description: 'Monitore sua rotina e suas tarefas',
 };
 
-export default function RootLayout({children,}: Readonly<{
-  children: React.ReactNode;}>) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="pt-br" suppressHydrationWarning>
+    <html lang="pt-br">
       <body className={inter.className}>
         <AuthProvider>
-          <RoutineProvider>
-            <Layout>{children}</Layout>
-          </RoutineProvider>
+          <RoutinesProvider>
+            <TasksProvider>
+              <TimerProvider>
+                <Layout>{children}</Layout>
+              </TimerProvider>
+            </TasksProvider>
+          </RoutinesProvider>
         </AuthProvider>
       </body>
     </html>

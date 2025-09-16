@@ -2,13 +2,14 @@
 
 import React from 'react';
 import { TaskCard } from '@/components/features/TaskCard';
-import { useRoutine } from '@/contexts/RoutineContext';
+import { useRoutines } from '@/contexts/RoutinesContext';
+import { useTasks } from '@/contexts/TasksContext';
 import { AddTask } from './AddTask';
 
 export function TaskList() {
+  const { activeRoutine } = useRoutines();
   const {
     tasks,
-    activeRoutine,
     isAnyTaskRunning,
     handleStartTask,
     handlePauseTask,
@@ -16,7 +17,7 @@ export function TaskList() {
     handleCompleteTask,
     handleDeleteTask,
     handleUpdateTaskName,
-  } = useRoutine();
+  } = useTasks();
 
   if (!activeRoutine) {
     return null;

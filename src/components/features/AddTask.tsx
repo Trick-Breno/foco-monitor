@@ -1,12 +1,12 @@
 'use client';
 
 import React, {useState} from "react";
-import { useRoutine } from "@/contexts/RoutineContext";
+import { useTasks } from "@/contexts/TasksContext";
 import { Botao } from "../ui/Botao";
 
 export function AddTask() {
     const [newTaskName, setNewTaskName] = useState('');
-    const {handleAddTask} = useRoutine();
+    const {handleAddTask} = useTasks();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
