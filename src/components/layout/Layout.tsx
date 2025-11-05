@@ -58,14 +58,14 @@ export function Layout({ className, children, ...props }: LayoutProps) {
               href="/monitoramento"
               className="p-4 text-center text-sm w-full hover:bg-gray-700 transition-colors"
             >
-              Monitoramento
+              Progresso
             </Link>
 
             <Link
               href="/settings"
               className="p-4 text-center text-sm w-full hover:bg-gray-700 transition-colors"
             >
-              Configurações
+              Config
             </Link>
 
             {user && (
