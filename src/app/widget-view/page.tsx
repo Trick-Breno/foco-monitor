@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import WidgetLoader from '@/app/widget-view/widgetLoader'; // Vamos criar este arquivo a seguir
+import WidgetLoader from '@/app/widget-view/WidgetLoader'; // Vamos criar este arquivo a seguir
 
 // Esta é a página (Server Component)
 export default function WidgetPage() {
