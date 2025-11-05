@@ -14,7 +14,7 @@ export function Layout({ className, children, ...props }: LayoutProps) {
   const pathname = usePathname(); // 2. Pegar o caminho da URL atual
 
   // 3. Definir quais páginas são públicas
-  const publicPaths = ['/login'];
+  const publicPaths = ['/login','/widget-view'];;
   const isPublicPage = publicPaths.includes(pathname);
 
   // 4. Se for uma página pública, renderiza um layout mínimo
@@ -25,6 +25,16 @@ export function Layout({ className, children, ...props }: LayoutProps) {
       </div>
     );
   }
+
+  const getLinkClasses = (href: string) => {
+    const isActive = pathname === href;
+    // Ajustamos as classes para ter um estado ativo claro
+    return `p-4 text-center text-sm w-full transition-colors ${
+      isActive
+        ? 'text-blue-400 bg-gray-700' // Estilo ATIVO
+        : 'text-gray-300 hover:bg-gray-700' // Estilo INATIVO
+    }`;
+  };
 
   // 5. Se não for pública, renderiza o layout completo e protegido
   return (
@@ -43,12 +53,21 @@ export function Layout({ className, children, ...props }: LayoutProps) {
             >
               Central de Tarefas
             </Link>
+
             <Link
               href="/monitoramento"
               className="p-4 text-center text-sm w-full hover:bg-gray-700 transition-colors"
             >
               Monitoramento
             </Link>
+
+            <Link
+              href="/settings"
+              className="p-4 text-center text-sm w-full hover:bg-gray-700 transition-colors"
+            >
+              Configurações
+            </Link>
+
             {user && (
               <div className="p-2">
                 <Botao onClick={logout} variant="secondary" className="text-xs px-2 py-1">
