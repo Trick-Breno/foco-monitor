@@ -25,17 +25,7 @@ export function Layout({ className, children, ...props }: LayoutProps) {
       </div>
     );
   }
-
-  const getLinkClasses = (href: string) => {
-    const isActive = pathname === href;
-    // Ajustamos as classes para ter um estado ativo claro
-    return `p-4 text-center text-sm w-full transition-colors ${
-      isActive
-        ? 'text-blue-400 bg-gray-700' // Estilo ATIVO
-        : 'text-gray-300 hover:bg-gray-700' // Estilo INATIVO
-    }`;
-  };
-
+  
   // 5. Se não for pública, renderiza o layout completo e protegido
   return (
     <div
