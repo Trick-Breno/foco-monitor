@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { WidgetStatus } from './page';
+import { WidgetStatus } from './WidgetStatus'; 
 import {WidgetDisplay} from '@/components/features/widget/WidgetDisplay'
 import { Rotina, Tarefa } from '@/types'; // <--- CORRIGIDO: Importando seus tipos
 

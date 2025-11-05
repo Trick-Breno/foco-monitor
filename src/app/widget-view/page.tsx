@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import WidgetLoader from '@/app/widget-view/WidgetLoader'; // Vamos criar este arquivo a seguir
+import { WidgetStatus } from './WidgetStatus';
 
 // Esta é a página (Server Component)
 export default function WidgetPage() {
@@ -11,12 +12,3 @@ export default function WidgetPage() {
     </div>
   );
 }
-
-// Um componente simples para exibir status
-export const WidgetStatus = ({ message }: { message: string }) => {
-  return (
-    <div className="flex items-center justify-center h-40 bg-gray-800 rounded-lg">
-      <p className="text-gray-400">{message}</p>
-    </div>
-  );
-};
